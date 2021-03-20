@@ -1,7 +1,14 @@
 # LabelApp
 Lable print &amp; search
-communicate with printer
-establish database query
-UI design
-chek box, layout, downlist
-smb.jar
+
+
+
+
+
+1.communicate with printer
+2.establish database query
+3.UI design
+4.chek box, layout, downlist
+5.smb.jar
+6.java swind
+7.7. window builder
