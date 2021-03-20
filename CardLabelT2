@@ -1,0 +1,1293 @@
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Vector;
+
+import javax.swing.JTextPane;
+import javax.swing.JLabel;
+import java.awt.Dimension;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+
+import jcifs.smb.NtlmPasswordAuthentication;
+import jcifs.smb.SmbException;
+import jcifs.smb.SmbFile;
+import jcifs.smb.SmbFileOutputStream;
+import java.awt.Color;
+import java.awt.Font;
+import java.sql.*;
+
+import javax.swing.JCheckBox;
+import javax.swing.JMenuItem;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
+import javax.swing.JScrollPane;
+import java.awt.Toolkit;
+import javax.swing.ScrollPaneConstants;
+
+/*
+ * Version 4.3
+ * 
+ * */
+public class CardLabelT2 extends JFrame {
+
+	private JPanel contentPane;
+	Boolean isSubmmited = false;
+	private String[] Printer = { "Zebra ZPLII", "Sato CL412e" };
+	private String[] Zebra = { "metzeb01", "metzeb02", "metzeb03", "metzeb04","metzeb05" };
+	private String[] Sato = { "metsato01" };
+
+	
+	/**
+	 * Launch the application.
+	 */
+	JComboBox ID_box = new JComboBox(Zebra);
+	JComboBox Printer_box = new JComboBox(Printer);
+	JButton Print_ALL = new JButton("PrintAll");
+	JButton Search = new JButton("Search");
+	JButton Delete_ROW = new JButton("Remove");
+	private final JButton Clear = new JButton("Clear");
+	private final JButton Exit = new JButton("Exit");
+	static String JDBC_DRIVER = "oracle.jdbc.driver.OracleDriver";  
+	static String DB_URL = "jdbc:oracle:thin:@10.46.7.12:1623:CSPRODMT";
+	static String DB_USER = "csread";
+	static String DB_PWD = "csread";
+	private JTextField PartField1;
+
+	static Vector<Vector<String>> DataValue = new Vector<Vector<String>>();
+    Vector<Object> columnNames = new Vector<Object>();
+	private final JTable table = new JTable();
+	private final JScrollPane scrollPane = new JScrollPane();
+	String[] Probe=DropDown_List(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD);
+	String[] TNR=Dictatorial(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD);
+	JComboBox Probe_Equip = new JComboBox(Probe);
+	JComboBox TR_Equip = new JComboBox(TNR);
+	//String Apparatus1 = Probe_Equip.getSelectedItem().toString();
+	
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					CardLabelT2 frame = new CardLabelT2();
+					//frame.setVisible(true);
+			        frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public String[] Dictatorial(String DRIVER,String URL,String USER,String PWD ){
+		Connection conn = null;
+		Statement stmt = null;
+		
+		try{
+		      //STEP 2: Register JDBC driver
+		      Class.forName(DRIVER);
+
+		      //STEP 3: Open a connection
+		      System.out.println("Connecting to database...");
+		      conn = DriverManager.getConnection(URL,USER,PWD);
+
+		      //STEP 4: Execute a query
+		      System.out.println("Creating statement...");
+		      stmt = conn.createStatement();
+		      String sql;
+//		      sql = "select Resourcename FROM ResourceDef R "+
+//		    		  "INNER JOIN ResourceFamily F ON R.ResourceFamilyId = F.ResourceFamilyId "+
+//		    		  "WHERE RESOURCEFAMILYNAME='MET TNR' order by Resourcename";
+		      sql="SELECT R.RESOURCENAME FROM RESOURCEDEF R "+
+		    		  "LEFT JOIN RESOURCEGROUPENTRIES  RGE ON RGE.ENTRIESID=R.RESOURCEID "+
+"LEFT JOIN RESOURCEGROUP RG ON RG.RESOURCEGROUPID=RGE.RESOURCEGROUPID "+
+"WHERE RG.RESOURCEGROUPID='48802180000004b7' ORDER BY R.RESOURCENAME";
+		      System.out.println(sql);
+		      ResultSet rs = stmt.executeQuery(sql);
+
+		      
+		      //STEP 5: Extract data from result set
+
+		      int amount=0;
+		      //String[] TS = new String[number];
+		      List<String> TS = new ArrayList<String>();
+		      while(rs.next()){
+		    	  TS.add(rs.getString("Resourcename"));
+		      //TS[amount++]= rs.getString("Resourcename");
+		      }
+		      System.out.println(TS);
+		      int retval = TS.size();
+		      System.out.println(retval);
+		      String[] facility=new String[retval];
+		      int number=0;
+		      //facility[number]="";
+		      for (String context : TS) {
+		    	  facility[number++]=context;
+		          System.out.println("context = " + context);
+		          
+		        }
+
+
+		      //STEP 6: Clean-up environment
+		      
+		      rs.close();
+		      stmt.close();
+		      conn.close();
+		      return  facility;
+		   }catch(SQLException se){
+		      //Handle errors for JDBC
+		      se.printStackTrace();
+		   }catch(Exception e){
+		      //Handle errors for Class.forName
+		      e.printStackTrace();
+		   }finally{
+		      //finally block used to close resources
+		      try{
+		         if(stmt!=null)
+		            stmt.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(conn!=null)
+		            conn.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		   }//end try
+		   System.out.println("OK!");
+		   String[] apparatus=new String[1];
+		   apparatus[1]="ERROR";
+		return apparatus;
+	}
+	public String[] DropDown_List(String DRIVER,String URL,String USER,String PWD ){
+		Connection conn = null;
+		Statement stmt = null;
+		try{
+		      //STEP 2: Register JDBC driver
+		      Class.forName(DRIVER);
+
+		      //STEP 3: Open a connection
+		      System.out.println("Connecting to database...");
+		      conn = DriverManager.getConnection(URL,USER,PWD);
+
+		      //STEP 4: Execute a query
+		      System.out.println("Creating statement...");
+		      stmt = conn.createStatement();
+		      String sql;
+//		      sql = "select Resourcename FROM ResourceDef R "+
+//		    		  "INNER JOIN ResourceFamily F ON R.ResourceFamilyId = F.ResourceFamilyId "+
+//		    		  "WHERE RESOURCEFAMILYNAME='MET TESTER' order by Resourcename";
+		      sql="SELECT R.RESOURCENAME FROM RESOURCEDEF R "+
+"LEFT JOIN RESOURCEGROUPENTRIES  RGE ON RGE.ENTRIESID=R.RESOURCEID "+
+"LEFT JOIN RESOURCEGROUP RG ON RG.RESOURCEGROUPID=RGE.RESOURCEGROUPID "+
+"WHERE RG.RESOURCEGROUPID='48802180000004b8' ORDER BY R.RESOURCENAME";
+		      System.out.println(sql);
+		      ResultSet rs = stmt.executeQuery(sql);
+
+		      
+		      //STEP 5: Extract data from result set
+
+		      int amount=0;
+		      //String[] TS = new String[number];
+		      List<String> TS = new ArrayList<String>();
+		      while(rs.next()){
+		    	  TS.add(rs.getString("Resourcename"));
+		      //TS[amount++]= rs.getString("Resourcename");
+		      }
+		      System.out.println(TS);
+		      int retval = TS.size();
+		      System.out.println(retval);
+		      String[] facility=new String[retval];
+		      int number=0;
+		      //facility[number]="";
+		      for (String context : TS) {
+		    	  facility[number++]=context;
+		          System.out.println("context = " + context);
+		          
+		        }
+
+
+		      //STEP 6: Clean-up environment
+		      
+		      rs.close();
+		      stmt.close();
+		      conn.close();
+		      return  facility;
+		   }catch(SQLException se){
+		      //Handle errors for JDBC
+		      se.printStackTrace();
+		   }catch(Exception e){
+		      //Handle errors for Class.forName
+		      e.printStackTrace();
+		   }finally{
+		      //finally block used to close resources
+		      try{
+		         if(stmt!=null)
+		            stmt.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(conn!=null)
+		            conn.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		   }//end try
+		   System.out.println("OK!");
+		   String[] apparatus=new String[1];
+		   apparatus[1]="ERROR";
+		return apparatus;
+	}
+	/**
+	 * Create the frame.
+	 */
+	public CardLabelT2() {
+		setFont(new Font("Euphemia", Font.PLAIN, 12));
+		setIconImage(Toolkit.getDefaultToolkit().getImage("C:\\Users\\metbe001.CO\\Desktop\\images.png"));
+		setTitle("CardLabel");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 1303, 810);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		Printer_box.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		
+
+		Printer_box.setBounds(70, 11, 209, 59);
+		contentPane.add(Printer_box);
+		ID_box.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		
+
+		ID_box.setBounds(341, 11, 209, 59);
+		contentPane.add(ID_box);
+		Print_ALL.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		
+
+		Print_ALL.setBounds(592, 11, 209, 59);
+		contentPane.add(Print_ALL);
+		Clear.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		Clear.setBounds(833, 11, 209, 59);
+		Clear.addActionListener(new Test_function());
+		contentPane.add(Clear);
+		Exit.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		Exit.setBounds(1065, 11, 209, 59);
+		Exit.addActionListener(new Test_function());
+		contentPane.add(Exit);
+		
+		JLabel lblNewLabel = new JLabel("LOT NO");
+		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		lblNewLabel.setBounds(22, 78, 128, 48);
+		contentPane.add(lblNewLabel);
+		
+		PartField1 = new JTextField("Q1KN78.1A");
+		PartField1.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		PartField1.setBounds(298, 81, 523, 42);
+		contentPane.add(PartField1);
+		PartField1.setColumns(10);
+		
+		JLabel lblProbeEquipment = new JLabel("Probe Equipment");
+		lblProbeEquipment.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		lblProbeEquipment.setBounds(22, 143, 266, 48);
+		contentPane.add(lblProbeEquipment);
+		
+		JLabel lblTrEquipment = new JLabel("T&R   Equipment");
+		lblTrEquipment.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		lblTrEquipment.setBounds(23, 188, 227, 48);
+		contentPane.add(lblTrEquipment);
+		Probe_Equip.setFont(new Font("Tahoma", Font.PLAIN, 26));
+		
+
+		Probe_Equip.setBounds(298, 158, 166, 34);
+		Probe_Equip.setSelectedItem(null);
+		contentPane.add(Probe_Equip);
+		TR_Equip.setFont(new Font("Tahoma", Font.PLAIN, 26));
+
+
+		TR_Equip.setBounds(298, 203, 166, 34);
+		TR_Equip.setSelectedItem(null);
+		contentPane.add(TR_Equip);
+		Search.setFont(new Font("Tahoma", Font.PLAIN, 28));
+
+		Search.setBounds(759, 177, 209, 59);
+		contentPane.add(Search);
+		scrollPane.setBounds(22, 247, 1238, 514);
+		
+		contentPane.add(scrollPane);
+		table.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		scrollPane.setViewportView(table);
+		table.setModel(new DefaultTableModel(
+			new Object[][] {
+				{null, null, null, null, null, null, "", null},
+			},
+			new String[] {
+				"Lot_Number", "Nickname", "Device", "Workflow", "MASK", "QTY1", "QTY2", "V"
+			}
+		) {
+			Class[] columnTypes = new Class[] {
+				Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Boolean.class
+			};
+			public Class getColumnClass(int columnIndex) {
+				return columnTypes[columnIndex];
+			}
+		});
+		table.getColumnModel().getColumn(0).setPreferredWidth(82);
+		table.getColumnModel().getColumn(3).setPreferredWidth(103);
+		table.getColumnModel().getColumn(5).setPreferredWidth(77);
+		table.getColumnModel().getColumn(6).setPreferredWidth(70);
+		table.getColumnModel().getColumn(7).setPreferredWidth(66);
+		table.getColumnModel().getColumn(7).setMinWidth(13);
+		table.getColumnModel().getColumn(7).setMaxWidth(214748000);
+		Delete_ROW.setFont(new Font("Tahoma", Font.PLAIN, 28));
+		
+		
+		Delete_ROW.addActionListener(new Test_function());
+		Delete_ROW.setBounds(1051, 177, 209, 59);
+		contentPane.add(Delete_ROW);
+        JTableHeader head = table.getTableHeader(); // 創建表格標題對象
+        head.setPreferredSize(new Dimension(head.getWidth(), 30));// 設置表頭大小
+        head.setFont(new Font("楷體", Font.PLAIN, 30));// 設置表格字體
+        table.setRowHeight(30);// 設置表格行寬
+		
+
+		Print_ALL.addActionListener(new Test_function());
+		Search.addActionListener(new Test_function());		
+
+
+        //getContentPane().add(contentPane);
+		
+		
+
+		Printer_box.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.SELECTED) {
+					ID_box.removeAllItems();
+					String item = (String) e.getItem();
+					String[] useItems = null;
+
+					if(item=="Zebra ZPLII") {
+						useItems = Zebra;
+					}
+
+					if(item=="Sato CL412e"){
+						useItems = Sato;
+
+					}
+					for (String data1 : useItems) {
+						ID_box.addItem(data1);
+					}
+				}
+			}
+		});
+	}
+	class Test_function implements ActionListener {
+		private String dictate;
+		public void actionPerformed(ActionEvent ae) {
+			try {
+				// create check parameter - checkValue = 0
+
+				System.out.println("Flag :" + isSubmmited);
+				// get current state
+				String printer = Printer_box.getSelectedItem().toString();
+				String printerid = ID_box.getSelectedItem().toString();
+
+
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd");
+				GregorianCalendar timeFormat = new GregorianCalendar();
+				String time = timeFormat.get(Calendar.HOUR) + ":"
+						+ timeFormat.get(Calendar.MINUTE);
+				Date date = new Date();
+
+				// connect to met-psc server
+				String user = "PEREGRINE\\metadmin";
+				String pass = "Murata01!";
+				NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
+						"", user, pass);
+				//String xmlPath = "smb://met-psc-pt2/LoftwareDataFiles/";
+				/*Normal*/
+				String csvPath = "smb://10.46.7.23/LoftwareDataFiles/CSV/";
+				/*Test*/
+				//String csvPath = "smb://met-psc-pt2/LoftwareDataFiles/CSV/";
+				// Click Submit button
+				// JDBC driver name and database URL
+				Connection conn = null;
+				Statement stmt = null;
+				String text1 = PartField1.getText().toUpperCase();
+				//String Apparatus1 = Probe_Equip.getSelectedItem().toString();
+
+					LinkedList<String> monologue = new LinkedList<String>();
+					String[] tokens = text1.split(",");
+					String LotNumber = "";
+					System.out.println("Length:"+tokens.length);
+					int part=tokens.length;
+					for (String token:tokens) {
+						if(part<2){
+						LotNumber="A.Lot like '"+token+"%'"+LotNumber;
+						}else{
+							LotNumber=LotNumber+"A.Lot like '"+token+"%'"+"OR ";
+						}
+					}
+						if(part>1){
+							LotNumber=LotNumber.substring(0, LotNumber.length()-3);
+						}
+					System.out.println(LotNumber);
+					if (ae.getSource() == Search) {
+						if (isEmpty(text1) ) {
+							JOptionPane.showMessageDialog(null,
+									"Please input [LOT No]",
+									"Warring", JOptionPane.INFORMATION_MESSAGE);
+							return;
+						}
+						SearchData(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD ,LotNumber);
+						// set check parameter to true
+						isSubmmited = true;
+						int nominee = table.getRowCount();
+					
+						LinkedList<String> Starkly = new LinkedList<String>();
+						int patron=0;
+						for (int i = 0; i < nominee; i++){ 
+							patron++;
+			                System.out.println("Table"+i+",0:"+table.getModel().getValueAt(i, 0));
+			                Starkly.add(table.getModel().getValueAt(i, 0).toString());
+						}
+						if(patron<1){
+							JOptionPane.showMessageDialog(null,
+									"Data was not found!!","Warning",
+									JOptionPane.INFORMATION_MESSAGE);	
+						}else{
+							JOptionPane.showMessageDialog(null,
+									"Search successful!","Correct",
+									JOptionPane.INFORMATION_MESSAGE);
+						}
+//			        LinkedList<String> parton = new LinkedList<String>();
+//			        int impose =0;
+//					for (String token:tokens) {
+//						System.out.println("token:"+token);
+//						if(Starkly.contains(token)){
+//							
+//						}else{
+//							parton.push(token);
+//							impose++;
+//						}
+//					}
+//					if(impose==1){
+//					JOptionPane.showMessageDialog(null,
+//							"Lot Number "+parton+"\n was not Found","Correct",
+//							JOptionPane.INFORMATION_MESSAGE);
+//					}else if(impose>1){
+//						JOptionPane.showMessageDialog(null,
+//								"Lot Number "+parton+"\n were not Found","Correct",
+//								JOptionPane.INFORMATION_MESSAGE);						
+//					}else if(impose<1){
+//						JOptionPane.showMessageDialog(null,
+//								"Search successful!","Correct",
+//								JOptionPane.INFORMATION_MESSAGE);						
+//					}
+//					parton.clear();
+					// Click the clear button
+				} else if (ae.getSource() == Print_ALL){
+					String ProbeSelected;
+					String TNRSelected = "";
+					Boolean sabotage = false;
+					try{
+					ProbeSelected=Probe_Equip.getSelectedItem().toString();}
+					catch(Exception e){
+						JOptionPane.showMessageDialog(null, "Please input [Probe Equip]", "Warring",
+								JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+
+					System.out.println("APPRARTUS:"+ProbeSelected);
+
+					
+					int remain = table.getRowCount();
+					int surplus = table.getColumnCount()-1;
+					LinkedList<String> FrontRowData = new LinkedList<String>();
+					LinkedList<String> InformationtoPrint = new LinkedList<String>();
+					LinkedList<String> defer = new LinkedList<String>();
+					String SALESORDER;
+
+					int source=0;
+					int choose=0;
+					LinkedList<Integer> chosen = new LinkedList<Integer>();
+					int many;
+					// count chosen row
+					for (int i = 0; i < remain; i++){ 
+						System.out.println(table.getModel().getValueAt(i, 7));
+						if (table.getModel().getValueAt(i, 7)==null) {
+							many=choose++;
+						}else{
+							chosen.add(i);
+						}
+					}
+					choose=remain-choose;
+					if(choose<1){
+						for(int stake=0;stake<remain;stake++){
+							defer.add(table.getModel().getValueAt(stake, 3).toString().substring(0,7));
+						}
+						if(defer.contains("MET-KGD")){
+							System.out.println("STOP");
+							if(TR_Equip.getSelectedItem()==null){
+								JOptionPane.showMessageDialog(null, "Please input [T&R Equip]", "Warning",JOptionPane.ERROR_MESSAGE);
+								return;
+							}
+							TNRSelected=TR_Equip.getSelectedItem().toString();
+						}else{	
+						System.out.println("Nothing");
+						}
+						defer.clear();
+				        for (int i = 0; i < remain; i++){ 
+				        	SALESORDER="";
+				        	
+				        		source++;
+					            for (int j = 0; j < surplus; j++){ 
+					                System.out.println("Table"+i+","+j+":"+table.getModel().getValueAt(i, j));
+					                FrontRowData.add(table.getModel().getValueAt(i, j).toString());
+					                
+					            }
+					            InformationtoPrint=Paradigm(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD,FrontRowData);//Find workflow step
+					            SALESORDER=ommision(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD,FrontRowData);
+					            ExportXML(InformationtoPrint,text1,ProbeSelected,TNRSelected,SALESORDER);
+					            FrontRowData.clear();
+					            InformationtoPrint.clear();
+				        } 
+					}else{
+						for(Integer temp : chosen){
+							defer.add(table.getModel().getValueAt(temp, 3).toString().substring(0,7));
+						}
+						if(defer.contains("MET-KGD")){
+							System.out.println("STOP");
+							if(TR_Equip.getSelectedItem()==null){
+								JOptionPane.showMessageDialog(null, "Please input [T&R Equip]", "Warning",JOptionPane.ERROR_MESSAGE);
+								return;
+							}
+							TNRSelected=TR_Equip.getSelectedItem().toString();
+						}else{	
+						System.out.println("Nothing");
+						}
+						defer.clear();
+						for (Integer temp : chosen) {
+				        	SALESORDER="";
+				        	
+				        	    System.out.println(temp);
+				        		source++;
+					            for (int j = 0; j < surplus; j++){ 
+					                System.out.println("Table"+temp+","+j+":"+table.getModel().getValueAt(temp, j));
+					                FrontRowData.add(table.getModel().getValueAt(temp, j).toString());
+					                
+					            }
+					            InformationtoPrint=Paradigm(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD,FrontRowData);//Find workflow step
+					            SALESORDER=ommision(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD,FrontRowData);
+					            ExportXML(InformationtoPrint,text1,ProbeSelected,TNRSelected,SALESORDER);
+					            FrontRowData.clear();
+					            InformationtoPrint.clear();
+				        } 
+					}
+			        sabotage = true;
+					JOptionPane.showMessageDialog(null, "Successful print "+source+" Label","Correct",JOptionPane.INFORMATION_MESSAGE);
+			        
+			        //String[][] DataValue=PrintData(JDBC_DRIVER,DB_URL,DB_USER,DB_PWD ,LotNumber);
+
+				}else if (ae.getSource() == Clear) {
+					Probe_Equip.setSelectedItem(null);
+					TR_Equip.setSelectedItem(null);
+					PartField1.setText("");
+					table.setModel(new DefaultTableModel(
+							new Object[][] {{null, null,null, null, null, null,null, Boolean.FALSE}},
+							new String[] {"Lot_Number", "Nickname","Device", "Workflow","MASK", "QTY1", "QTY2", "V"}) {
+							Class[] columnTypes = new Class[] {
+								Object.class, Object.class, Object.class,Object.class, Object.class,Object.class, Object.class, Boolean.class
+							};
+							public Class getColumnClass(int columnIndex) {
+								return columnTypes[columnIndex];
+							}
+						});
+
+				} else if(ae.getSource() == Delete_ROW){
+
+						DefaultTableModel model = (DefaultTableModel) table.getModel();
+						System.out.println(model.getRowCount());
+						//System.out.println(model.getValueAt(1, 5));
+						System.out.println(model.getValueAt(0, 5));
+						//System.out.println(table.getModel().getValueAt(1, 5).toString());
+						//int selectedRow = table.getSelectedRow();
+				          //model.removeRow(selectedRow);
+						int n = model.getRowCount();
+				          for(int i=0;i<n;i++){
+		                    if (model.getValueAt(i, 7)==null)
+		                    {  
+
+		                    }else {
+		                    	System.out.print(table.getModel().getValueAt(i, 7).toString());
+		                    	model.removeRow(i);
+		                    	i--;
+		                    	n--;
+		                    }
+				          }
+						   //int SelectedRowIndex = table.getSelectedRow();				   
+						     //model.removeRow(SelectedRowIndex);
+
+
+
+				}else if (ae.getSource() == Exit) {
+					if (isSubmmited) {
+						System.exit(0);
+					} else {
+						JFrame f = new JFrame("Comfirm Dialog");
+						int result = JOptionPane.showConfirmDialog(f,
+								"Not print Label yet. Are you sure to exit?",
+								"Warring", JOptionPane.YES_NO_OPTION,
+								JOptionPane.WARNING_MESSAGE);
+						if (result == JOptionPane.YES_OPTION) {
+							System.exit(0);
+						}
+
+					}
+
+					}
+				
+				// Warning message when something exception occurs
+			} catch (Exception ae2) {
+				System.out.println(ae2.getMessage());
+				JOptionPane.showMessageDialog(null, "Error", "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+			private String ommision(String DRIVER, String URL,String USER, String PWD, LinkedList<String> frontRowData) {
+				Connection conn = null;
+				Statement stmt = null;
+				try{
+				      //STEP 2: Register JDBC driver
+				      Class.forName(DRIVER);
+
+				      //STEP 3: Open a connection
+				      System.out.println("Connecting to database...");
+				      conn = DriverManager.getConnection(URL,USER,PWD);
+
+				      //STEP 4: Execute a query
+				      System.out.println("Creating statement...");
+				      stmt = conn.createStatement();
+				      String sql;
+				      System.out.println(frontRowData);
+				      System.out.println(frontRowData.getFirst());
+				      sql = "SELECT SALESORDER "+
+				    		  "FROM XXPSC_CAMSTAR_WIP_INVENTORY_V WHERE OPER <> 'Planned Start' "+
+				    		  "AND LOT NOT LIKE 'LVS%' AND WORKFLOW LIKE '%MET%' and Lot in ('"+frontRowData.getFirst()+"')";		      
+				      System.out.println("SALESORDER SQL:"+sql);
+				      ResultSet rs = stmt.executeQuery(sql);
+			    	  Integer count =0;
+			    	  dictate = "";
+				      //STEP 5: Extract data from result set
+				      while(rs.next()){
+				         //Retrieve by column name
+				    	  dictate=rs.getString("SALESORDER");
+				         count++;
+				         
+				      }
+				      return dictate;
+				   }catch(SQLException se){
+				      //Handle errors for JDBC
+				      se.printStackTrace();
+				   }catch(Exception e){
+				      //Handle errors for Class.forName
+				      e.printStackTrace();
+				   }finally{
+				      //finally block used to close resources
+				      try{
+				         if(stmt!=null)
+				            stmt.close();
+				      }catch(SQLException se2){
+				      }// nothing we can do
+				      try{
+				         if(conn!=null)
+				            conn.close();
+				      }catch(SQLException se){
+				         se.printStackTrace();
+				      }//end finally try
+				      
+				   }//end try
+				   System.out.println("Goodbye!");
+
+			return null;
+		}
+			public LinkedList<String> Paradigm(String DRIVER, String URL,String USER, String PWD, LinkedList<String> mandate) {
+				Connection conn = null;
+				Statement stmt = null;
+				try{
+				      //STEP 2: Register JDBC driver
+				      Class.forName(DRIVER);
+
+				      //STEP 3: Open a connection
+				      System.out.println("Connecting to database...");
+				      conn = DriverManager.getConnection(URL,USER,PWD);
+
+				      //STEP 4: Execute a query
+				      System.out.println("Creating statement...");
+				      stmt = conn.createStatement();
+				      String sql;
+				      System.out.println(mandate);
+				      System.out.println(mandate.getFirst());
+				      System.out.println(mandate.get(3).toString().length());
+				      System.out.println("workflowname:"+mandate.get(3).substring(0,mandate.get(3).toString().length()-2));
+				      System.out.println("workflowname:"+mandate.get(3).split(":")[1]);
+				      sql = "SELECT WFB.WORKFLOWNAME, WFS.WORKFLOWSTEPNAME FROM WORKFLOW wf Join WORKFLOWBASE wfb on wf.workflowbaseid=wfb.workflowbaseid "
++"Join WORKFLOWSTEP wfs on  wf.workflowid=wfs.workflowid WHERE WFB.WORKFLOWNAME ='"+mandate.get(3).substring(0,mandate.get(3).toString().length()-2)+"'" +
+		"and wf.workflowrevision='"+mandate.get(3).split(":")[1]+"'";
+				      System.out.println(sql);
+				      ResultSet rs = stmt.executeQuery(sql);
+			    	  Integer count =0;
+			    	  LinkedList<String> dictate = new LinkedList<String>();
+				      //STEP 5: Extract data from result set
+				      while(rs.next()){
+				         //Retrieve by column name
+				    	  dictate.add(rs.getString("WORKFLOWSTEPNAME"));
+				         count++;
+				         
+				      }
+				      dictate.addAll(0,mandate);
+				      System.out.println(dictate);
+				      //STEP 6: Clean-up environment
+				      rs.close();
+				      stmt.close();
+				      conn.close();
+				      return dictate;
+				   }catch(SQLException se){
+				      //Handle errors for JDBC
+				      se.printStackTrace();
+				   }catch(Exception e){
+				      //Handle errors for Class.forName
+				      e.printStackTrace();
+				   }finally{
+				      //finally block used to close resources
+				      try{
+				         if(stmt!=null)
+				            stmt.close();
+				      }catch(SQLException se2){
+				      }// nothing we can do
+				      try{
+				         if(conn!=null)
+				            conn.close();
+				      }catch(SQLException se){
+				         se.printStackTrace();
+				      }//end finally try
+				      
+				   }//end try
+				   System.out.println("Goodbye!");
+
+			return null;
+		}
+			public  Boolean isEmpty(String str) {
+				return str == null || str.trim().length() == 0;
+			}
+		public void SearchData(String DRIVER,String URL,String USER,String PWD ,String LotNumber){
+			Connection conn = null;
+			Statement stmt = null;
+			try{
+			      //STEP 2: Register JDBC driver
+			      Class.forName(DRIVER);
+
+			      //STEP 3: Open a connection
+			      System.out.println("Connecting to database...");
+			      conn = DriverManager.getConnection(URL,USER,PWD);
+
+			      //STEP 4: Execute a query
+			      System.out.println("Creating statement...");
+			      stmt = conn.createStatement();
+			      String sql;
+			      sql = "SELECT DISTINCT B.NICKNAME,A.LOT AS Lot_Number , A.DEVICE, A.WORKFLOW,A.MASK,A.QTYDIE AS Die_Qty, A.QTYWFR AS WF_Qty "+
+			    		  "FROM XXPSC_CAMSTAR_WIP_INVENTORY_V A join MET.Nickname B on trim(A.DEVICE)= trim(B.DEVICE) WHERE A.OPER <> 'Planned Start' "+
+			    		  "AND A.LOT NOT LIKE 'LVS%' AND A.WORKFLOW LIKE '%MET%' and "+LotNumber;
+			      System.out.println(sql);
+			      ResultSet rs = stmt.executeQuery(sql);
+
+		            ResultSetMetaData md = rs.getMetaData();
+		            int columns = md.getColumnCount();
+		            DefaultTableModel tm=(DefaultTableModel)table.getModel();
+
+		            tm.setRowCount(0);
+		            while(rs.next()){
+		            	Object o[]={rs.getString("Lot_Number"),rs.getString("NICKNAME"),rs.getString("DEVICE"),rs.getString("WORKFLOW"),rs.getString("MASK"),rs.getInt("Die_Qty"),rs.getInt("WF_Qty")};
+		            	tm.addRow(o);
+		            };
+
+		           
+			      //STEP 5: Extract data from result set
+			      while(rs.next()){
+
+			         //Retrieve by column name
+			    	  String  NICKNAME  = rs.getString("NICKNAME");
+			         String  LN  = rs.getString("Lot_Number");
+			         String DEVICE = rs.getString("DEVICE");
+			         String WFLOW = rs.getString("WORKFLOW");
+			         String MASKID = rs.getString("MASK");
+			         String Die = rs.getString("Die_Qty");
+			         String WF = rs.getString("WF_Qty");
+
+			      }
+				
+			      //STEP 6: Clean-up environment
+			      rs.close();
+			      stmt.close();
+			      conn.close();
+			   }catch(SQLException se){
+			      //Handle errors for JDBC
+			      se.printStackTrace();
+			   }catch(Exception e){
+			      //Handle errors for Class.forName
+			      e.printStackTrace();
+			   }finally{
+			      //finally block used to close resources
+			      try{
+			         if(stmt!=null)
+			            stmt.close();
+			      }catch(SQLException se2){
+			      }// nothing we can do
+			      try{
+			         if(conn!=null)
+			            conn.close();
+			      }catch(SQLException se){
+			         se.printStackTrace();
+			      }//end finally try
+			   }//end try
+			   System.out.println("Goodbye!");
+		}
+		public  String[][] PrintData(String DRIVER,String URL,String USER,String PWD ,String LotNumber){
+			Connection conn = null;
+			Statement stmt = null;
+			try{
+			      //STEP 2: Register JDBC driver
+			      Class.forName(DRIVER);
+
+			      //STEP 3: Open a connection
+			      System.out.println("Connecting to database...");
+			      conn = DriverManager.getConnection(URL,USER,PWD);
+
+			      //STEP 4: Execute a query
+			      System.out.println("Creating statement...");
+			      stmt = conn.createStatement();
+			      String sql;
+			      sql = "SELECT DISTINCT LOT AS Lot_Number , DEVICE, WORKFLOW ,QTYDIE AS Die_Qty, QTYWFR AS WF_Qty "+
+			    		  "FROM XXPSC_CAMSTAR_WIP_INVENTORY_V WHERE OPER <> 'Planned Start' "+
+			    		  "AND LOT NOT LIKE 'LVS%' AND WORKFLOW LIKE '%MET%' and Lot in ("+LotNumber+")";
+			      System.out.println(sql);
+			      ResultSet rs = stmt.executeQuery(sql);
+		    	  String[][] arr = new String[50][20];
+		    	  Integer count =0;
+			      //STEP 5: Extract data from result set
+			      while(rs.next()){
+			         //Retrieve by column name
+			         String  LN  = rs.getString("Lot_Number");
+			         String DEVICE = rs.getString("DEVICE");
+			         String WFLOW = rs.getString("WORKFLOW");
+			         String Die = rs.getString("Die_Qty");
+			         String WF = rs.getString("WF_Qty");
+			         arr[count][0]=LN;
+			         arr[count][1]=DEVICE;
+			         arr[count][2]=WFLOW;
+			         arr[count][3]=Die;
+			         arr[count][4]=WF;
+			         count++;
+			         
+			      }
+			        for (int i = 0; i < 2; i++){ 
+			            for (int j = 0; j < 5; j++){ 
+			                System.out.println("arr[" + i + "][" + j + "] = "+ arr[i][j]);
+			            }
+			    } 
+				      System.out.println(arr.length);
+				      System.out.println(arr[1].length);
+				      System.out.println(arr[1][1].length());
+			      //STEP 6: Clean-up environment
+			      rs.close();
+			      stmt.close();
+			      conn.close();
+			      return arr;
+			   }catch(SQLException se){
+			      //Handle errors for JDBC
+			      se.printStackTrace();
+			   }catch(Exception e){
+			      //Handle errors for Class.forName
+			      e.printStackTrace();
+			   }finally{
+			      //finally block used to close resources
+			      try{
+			         if(stmt!=null)
+			            stmt.close();
+			      }catch(SQLException se2){
+			      }// nothing we can do
+			      try{
+			         if(conn!=null)
+			            conn.close();
+			      }catch(SQLException se){
+			         se.printStackTrace();
+			      }//end finally try
+			      
+			   }//end try
+			   System.out.println("Goodbye!");
+			   String[][] a = new String[1][1];
+			   a[1][1]="ERROR";
+			return a;
+			   
+		}
+		void ExportXML(LinkedList<String> suffrage,String text,String impede,String parliament, String sALESORDER) throws SmbException, MalformedURLException, UnknownHostException {
+			System.out.println("Flag :" + isSubmmited);
+			// get current state
+			String printer = Printer_box.getSelectedItem().toString();
+			String printerid = ID_box.getSelectedItem().toString();
+
+			String DEVICE="";
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd");
+			GregorianCalendar timeFormat = new GregorianCalendar();
+			String time = timeFormat.get(Calendar.HOUR) + ":"+ timeFormat.get(Calendar.MINUTE);
+			Date date = new Date();
+			String[][] Abbreviation={{"DSRT","CP1"},{"DSRT2","CP2"},{"DSRT3","CP3"},
+					{"40BK","BK1"},{"40BK2","BK2"},{"40BK3","BK3"}};
+			// connect to met-psc server
+			String user = "PEREGRINE\\metadmin";
+			String pass = "Murata01!";
+			NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication("", user, pass);
+			/*Normal*/
+			//String xmlPath = "smb://10.46.7.14/LoftwareDataFiles/WDDrop/";
+			String xmlPath = "\\\\10.46.7.23\\LoftwareDataFiles\\WDDrop\\";
+			/*Test*/
+			//String xmlPath = "smb://10.46.7.23/WDDrop/";
+			//String xmlPath = "\\\\10.46.7.23\\LoftwareDataFiles\\WDDrop\\";
+			//String csvPath = "smb://met-psc-pt1/LoftwareDataFiles/CSV/";
+			System.out.println("suffrage"+suffrage);
+			LinkedList<String> inmate=vocational(suffrage);
+			System.out.println("inmate:"+inmate);
+			String exemption="";
+			String mortage="";
+			if (suffrage.contains("TAOI")) {
+				exemption="T"+suffrage.get(2);
+			}
+			if (suffrage.contains("WAOI")) {
+				mortage=suffrage.get(2);
+			}
+			String BLADEZ1="";
+			String BLADEZ2="";
+			if (suffrage.contains("DSWF")) {
+				BLADEZ1="Z1:HCDD";
+				BLADEZ2="Z2:HDBB";
+			}
+			int bargain = Integer.parseInt(inmate.get(0));//String to int
+			System.out.println("bargain:"+bargain);
+			// Create xml files
+			// Part number xml
+			String revolve;
+			if(suffrage.get(0).contains(".")){
+				System.out.println("YES");
+				System.out.println("suffrage.get(0).substring(0,suffrage.get(0).lastIndexOf('.')):"+suffrage.get(0).substring(0,suffrage.get(0).lastIndexOf(".")));
+				revolve=suffrage.get(0).substring(0,suffrage.get(0).lastIndexOf("."));//Lot Number
+			}else{
+				System.out.println("NO");
+				revolve=suffrage.get(0);//Lot number
+			}
+			System.out.println(suffrage.get(2).contains("WP"));
+			System.out.println("suffrage.get(2):"+suffrage.get(2).toString());//suffrage.get(2) means device
+			if(suffrage.get(2).contains("WP")){
+				DEVICE="PE"+suffrage.get(2).split("WP")[1].split("-")[0];//string get before "-"
+				System.out.println(DEVICE);
+			}else{
+				DEVICE=suffrage.get(2).substring(0,8);//index:0~7
+			}
+			if(!suffrage.contains("DSRT")){
+				impede="";
+			}else if(!suffrage.contains("KGDT")){
+				parliament="";
+			}
+			if(bargain<=1){
+				System.out.println("suffrage.get(4)"+suffrage.get(4));
+				StringBuffer partXmlContent = new StringBuffer();
+				String aggravate="PE"+suffrage.get(2).substring(2,8)+"_"+revolve;
+				System.out.println(inmate.size());
+				if(inmate.size()<=1){
+					}
+				else{
+					aggravate=aggravate+"_"+inmate.get(1)+"_";
+				}
+				partXmlContent.append(
+						"<?xml version=\"1.0\" standalone=\"yes\"?><labels _FORMAT=\"\\")
+						.append(printer).append("\\MET_RunCardLabelH_")
+						.append("4X3.lwl\" _QUANTITY=\"1\" _PRINTERNAME=\"")
+						.append(printerid)
+						.append("\" _JOBNAME=\"MET_RunCardLabelH")
+						//.append(printerid).append("_")
+						//.append(dateFormat.format(date))
+						.append("\">  <label>\n")
+						.append("<variable name=\"USERNAME\">").append("")
+						.append("</variable>\n")
+						.append("<variable name=\"COMPUTERNAME\">").append("")
+						.append("</variable>\n")
+						.append("<variable name=\"LOTID\">").append(revolve)
+						.append("</variable>\n")
+						.append("<variable name=\"SOURCELOT\">").append(sALESORDER)
+						.append("</variable>\n")
+						.append("<variable name=\"DEVICE\">").append(DEVICE)
+						.append("</variable>\n")
+						.append("<variable name=\"NICKNAME\">").append(suffrage.get(1))
+						.append("</variable>\n")
+						.append("<variable name=\"MASK_ID\">").append(suffrage.get(4))
+						.append("</variable>\n")
+						.append("<variable name=\"W_DEVICE\">").append(mortage)
+						.append("</variable>\n")
+						.append("<variable name=\"T_DEVICE\">").append(exemption)
+						.append("</variable>\n")
+						.append("<variable name=\"BLADE_Z1\">").append(BLADEZ1)
+						.append("</variable>\n")
+						.append("<variable name=\"BLADE_Z2\">").append(BLADEZ2)
+						.append("</variable>\n")
+						.append("<variable name=\"EQUIP\">").append(impede)
+						.append("</variable>\n")
+						.append("<variable name=\"EQUIP2\">").append(parliament)
+						.append("</variable>\n")
+						.append("<variable name=\"PROCESS\">").append(aggravate)
+						//aggravate+"_"+revolve+"_"+inmate.get(1)+"_"
+						.append("</variable>\n")
+						.append("</label> </labels>");
+				System.out.println(partXmlContent);
+				
+			    try {
+			        FileWriter myWriter = new FileWriter(xmlPath + "MET_RunCardLabelD_4X3_" + revolve + ".xml");
+			        myWriter.write(partXmlContent.toString());
+			        myWriter.close();
+			        System.out.println("Successfully wrote to the file.");
+			      } catch (IOException e) {
+			        System.out.println("An error occurred.");
+			        e.printStackTrace();
+			      }
+//				SmbFile partSmbFile;
+//				
+//				partSmbFile = new SmbFile(xmlPath + "MET_RunCardLabelH_4X3_" + revolve + ".xml", auth);
+//				SmbFileOutputStream partOutputSmbFile = null;
+//				partOutputSmbFile = new SmbFileOutputStream(partSmbFile);
+//
+//				try {
+//					partOutputSmbFile.write(partXmlContent.toString().getBytes());
+//					partOutputSmbFile.close();
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+				/*
+				try {
+					Thread.sleep(7000);
+					System.out.println("執行緒執行...");
+				} catch (InterruptedException e) {
+					System.out.println("執行緒中斷了...");
+					e.printStackTrace();
+				}
+				*/
+			}else{
+				//Create first Label
+				StringBuffer FirstXmlContent = new StringBuffer();
+				//String aggravate="PE"+suffrage.get(1).substring(2,7);
+				FirstXmlContent.append(
+						"<?xml version=\"1.0\" standalone=\"yes\"?><labels _FORMAT=\"\\")
+						.append(printer).append("\\MET_RunCardLabelH_")
+						.append("4X3.lwl\" _QUANTITY=\"1\" _PRINTERNAME=\"")
+						.append(printerid)
+						.append("\" _JOBNAME=\"MET_RunCardLabelH")
+						//.append(printerid).append("_")
+						//.append(dateFormat.format(date))
+						.append("\">  <label>\n")
+						.append("<variable name=\"USERNAME\">").append("")
+						.append("</variable>\n")
+						.append("<variable name=\"COMPUTERNAME\">").append("")
+						.append("</variable>\n")
+						.append("<variable name=\"LOTID\">").append(revolve)
+						.append("</variable>\n")
+						.append("<variable name=\"SOURCELOT\">").append(sALESORDER)
+						.append("</variable>\n")
+						.append("<variable name=\"DEVICE\">").append(DEVICE)
+						.append("</variable>\n")
+						.append("<variable name=\"NICKNAME\">").append(suffrage.get(1))
+						.append("</variable>\n")
+						.append("<variable name=\"MASK_ID\">").append(suffrage.get(4))
+						.append("</variable>\n")
+						.append("<variable name=\"W_DEVICE\">").append(mortage)
+						.append("</variable>\n")
+						.append("<variable name=\"T_DEVICE\">").append(exemption)
+						.append("</variable>\n")
+						.append("<variable name=\"BLADE_Z1\">").append(BLADEZ1)
+						.append("</variable>\n")
+						.append("<variable name=\"BLADE_Z2\">").append(BLADEZ2)
+						.append("</variable>\n")
+						.append("<variable name=\"EQUIP\">").append(impede)
+						.append("</variable>\n")
+						.append("<variable name=\"EQUIP2\">").append(parliament)
+						.append("</variable>\n")
+						.append("<variable name=\"PROCESS\">").append("")
+						//aggravate+"_"+revolve+"_"+inmate.get(1)+"_"
+						.append("</variable>\n")
+						.append("</label> </labels>");
+						System.out.println(FirstXmlContent);
+						
+//						SmbFile FirstSmbFile;
+//						
+//						FirstSmbFile = new SmbFile(xmlPath + "MET_RunCardLabelH_4X3_" + revolve + ".xml", auth);
+//						SmbFileOutputStream partOutputSmbFile = null;
+//						partOutputSmbFile = new SmbFileOutputStream(FirstSmbFile);
+						try {
+					        FileWriter myWriter = new FileWriter(xmlPath + "MET_RunCardLabelH_4X3_" + revolve + ".xml");
+					        myWriter.write(FirstXmlContent.toString());
+					        myWriter.close();
+					        System.out.println("Successfully wrote2 to the file.");
+//							partOutputSmbFile.write(FirstXmlContent.toString().getBytes());
+//							partOutputSmbFile.close();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						
+						//Create Second Label
+						StringBuffer SecondXmlContent = new StringBuffer();
+						String fraudulent=DEVICE+"_"+revolve+"_"+inmate.get(1)+"_";
+						String omission,discernment,mitigate,senator,turmoil;
+						try{discernment=DEVICE+"_"+revolve+"_"+inmate.get(2)+"_";}
+						catch(Exception e){discernment="";}
+						try{omission=DEVICE+"_"+revolve+"_"+inmate.get(3)+"_";}
+						catch(Exception e){omission="";}
+						try{senator=DEVICE+"_"+revolve+"_"+inmate.get(4)+"_";}
+						catch(Exception e){senator="";}
+						try{turmoil=DEVICE+"_"+revolve+"_"+inmate.get(5)+"_";}
+						catch(Exception e){turmoil="";}
+						try{mitigate=DEVICE+"_"+revolve+"_"+inmate.get(6)+"_";}
+						catch(Exception e){mitigate="";}
+						SecondXmlContent.append(
+								"<?xml version=\"1.0\" standalone=\"yes\"?><labels _FORMAT=\"\\")
+								.append(printer).append("\\MET_RunCardLabelD_")
+								.append("4X3.lwl\" _QUANTITY=\"1\" _PRINTERNAME=\"")
+								.append(printerid)
+								.append("\" _JOBNAME=\"MET_BakeLabel_DPETERSON")
+								.append("\">  <label>\n")
+								.append("<variable name=\"USERNAME\">").append("")
+								.append("</variable>\n")
+								.append("<variable name=\"COMPUTERNAME\">").append("")
+								.append("</variable>\n")
+								.append("<variable name=\"LOTID\">").append(revolve)
+								.append("</variable>\n")
+								.append("<variable name=\"DEVICE\">").append(DEVICE)
+								.append("</variable>\n")
+								.append("<variable name=\"MASK_ID\">").append(suffrage.get(4))
+								.append("</variable>\n")
+								.append("<variable name=\"EQUIP\">").append(impede)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS1\">").append(fraudulent)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS2\">").append(discernment)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS3\">").append(omission)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS4\">").append(senator)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS5\">").append(turmoil)
+								.append("</variable>\n")
+								.append("<variable name=\"PROCESS6\">").append(mitigate)
+								.append("</variable>\n")
+								.append("</label> </labels>");
+								System.out.println(SecondXmlContent);
+								
+
+								try {
+							        FileWriter myWriter = new FileWriter(xmlPath + "MET_RunCardLabelD_4X3_" + revolve + ".xml");
+							        myWriter.write(SecondXmlContent.toString());
+							        myWriter.close();
+							        System.out.println("Successfully wrote to the file-2.");
+
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								/*
+								try {
+									Thread.sleep(7000);
+									System.out.println("執行緒執行...");
+								} catch (InterruptedException e) {
+									System.out.println("執行緒中斷了...");
+									e.printStackTrace();
+								}
+								*/
+				
+			}
+			inmate.clear();
+		}
+		private LinkedList<String> vocational(LinkedList<String> suffrage) {
+			int expel=0;
+			System.out.println(suffrage);
+			System.out.println(suffrage.toString().contains("BK"));
+			System.out.println(suffrage.toString().contains("BK2"));
+			System.out.println(suffrage.toArray().toString());
+			LinkedList<String> defiance = new LinkedList<String>(); 
+			if(suffrage.contains("DSRT")){
+				defiance.add("CP1");
+				expel++;
+			}
+
+			if (suffrage.toString().contains("BK")) {
+				if(!suffrage.contains("BKGD")){
+					defiance.add("BK1");
+					expel++;
+				}
+			}
+			if(suffrage.contains("DSRT2")){
+				defiance.add("CP2");
+				expel++;
+			}
+			if(suffrage.toString().contains("BK2")){
+				if(!suffrage.contains("BKGD")){
+				defiance.add("BK2");
+				expel++;
+				}
+			}
+			if(suffrage.contains("DSRT3")){
+				defiance.add("CP3");
+				expel++;
+			}
+
+
+			if(suffrage.toString().contains("BK3")){
+				if(!suffrage.contains("BKGD")){
+				defiance.add("BK3");
+				expel++;
+				}
+			}
+			String foster = String.valueOf(expel);//Int to string
+			defiance.addFirst(foster);
+			return defiance;
+		}
+		
+	}
+}
